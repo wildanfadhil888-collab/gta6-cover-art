@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Coast Cover Studio</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="brand"><span class="sun" aria-hidden="true"></span><h1>NEON COAST <small>COVER STUDIO</small></h1></div>
+  <div class="history">
+    <button id="undo" disabled><span aria-hidden="true">↶</span> Undo</button>
+    <button id="redo" disabled><span aria-hidden="true">↷</span> Redo</button>
+  </div>
+</header>
+<main class="studio">
+  <aside class="controls" aria-label="Cover controls">
+    <section>
+      <div class="section-head"><h2>Photos</h2><label class="upload button" for="upload">＋ Add photos</label></div>
+      <input id="upload" class="visually-hidden" type="file" accept="image/*" multiple>
+      <div id="photos" class="photos" aria-label="Assign a photo to the selected panel"></div>
+    </section>
+    <section>
+      <h2>Composition</h2>
+      <div id="layouts" class="layouts" aria-label="Cover layouts"></div>
+      <label class="label-row">Panel <select id="panel"></select></label>
+      <div class="crop">
+        <label>Zoom <input id="zoom" type="range" min="1" max="4" step=".01" aria-label="Panel zoom"></label>
+        <label>X offset <input id="x" type="range" min="-100" max="100" aria-label="Horizontal crop offset"></label>
+        <label>Y offset <input id="y" type="range" min="-100" max="100" aria-label="Vertical crop offset"></label>
+      </div>
+    </section>
+    <section>
+      <div class="section-head"><h2>Colour grade</h2><output id="grade-name"></output></div>
+      <div id="grades" class="grades" aria-label="Colour grades"></div>
+    </section>
+    <section>
+      <h2>Lettering</h2>
+      <label class="label-row">Caption <input id="caption" maxlength="60" placeholder="Title"></label>
+      <label class="label-row">Subtitle <input id="subtitle" maxlength="60" placeholder="Script line"></label>
+      <label class="toggle"><input id="dots" type="checkbox"> Halftone dots</label>
+    </section>
+  </aside>
+  <div class="workspace">
+    <div class="workspace-top">
+      <h2>Live preview</h2>
+      <div id="formats" class="formats" aria-label="Preview aspect ratio"></div>
+    </div>
+    <div class="stage"><canvas id="cover" width="1280" height="720" aria-label="Cover preview. Click a panel to select it."></canvas></div>
+    <div class="workspace-bottom">
+      <p id="status" role="status">Pick a panel to adjust its photo.</p>
+      <div class="exports">
+        <div id="exports" class="export-sizes"></div>
+        <button id="export-all">↓ Export all three</button>
+      </div>
+    </div>
+  </div>
+</main>
+<script defer src="./src/gradient-grades.js"></script>
+<script defer src="./src/cover-layouts.js"></script>
+<script defer src="./src/poster-renderer.js"></script>
+<script defer src="./src/shots.js"></script>
+<script defer src="./src/export-png.js"></script>
+<script defer src="./src/studio-editor.js"></script>
+</body>
+</html>

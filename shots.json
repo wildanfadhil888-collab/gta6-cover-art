@@ -1,0 +1,6 @@
+[
+  { "name": "1-cover.jpg", "query": "?shot=cover&photo=boulevard&caption=Sunset%20Getaway&subtitle=After%20the%20heat&layout=nine&grade=vice&size=1920x1080", "w": 1280, "h": 720 },
+  { "name": "2-editor.jpg", "query": "?shot=editor&photo=boulevard&caption=Sunset%20Getaway", "w": 1280, "h": 720 },
+  { "name": "3-cover-story.jpg", "query": "?shot=cover&photo=pier&caption=LOW%20TIDE&subtitle=The%20last%20cast&layout=story&grade=teal&size=1080x1350", "w": 1024, "h": 1280 },
+  { "name": "4-cover-square.jpg", "query": "?shot=cover&photo=boulevard&caption=Midnight%20Motors&subtitle=Running%20on%20neon&layout=tilt&grade=neon&size=1080x1080", "w": 1080, "h": 1080 }
+]
