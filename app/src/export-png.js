@@ -1,20 +1,9 @@
-'use strict';
-
-async function exportCoverPng(state, photos, size) {
-  const { width, height } = exportFormats[size];
-  const output = document.createElement('canvas');
-  output.width = width;
-  output.height = height;
-  drawCoverPoster(output, state, photos);
-  const blob = await new Promise(resolve => output.toBlob(resolve, 'image/png'));
-  if (!blob) throw new Error('PNG encoding failed');
-  const slug = state.caption.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${slug || 'neon-coast'}-${size}.png`;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
+import {renderPoster} from './poster-renderer.js';
+export const formats=['1920x1080','1080x1350','1080x1080'];
+export async function exportPNG(state,photos,size){
+ const canvas=document.createElement('canvas');renderPoster(canvas,{...state,size},photos);
+ const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG encoding failed')),'image/png'));
+ const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`neon-coast-${size}.png`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
+ return blob;
 }
+export async function exportAll(state,photos){for(const size of formats)await exportPNG(state,photos,size);document.querySelector('#status').textContent='Three PNG downloads started.';}

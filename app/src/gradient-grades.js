@@ -1,60 +1,30 @@
-'use strict';
-
-const gradientGrades = {
-  vice: { name: 'Vice Sunset', stops: ['#17102b','#6c205e','#d64d75','#ff945c','#ffe5a5'] },
-  neon: { name: 'Neon Nights', stops: ['#090b24','#32236c','#a543ba','#44d7e1','#d9fff0'] },
-  golden: { name: 'Golden Hour', stops: ['#231425','#74372f','#c66a37','#f5a956','#fff0b8'] },
-  teal: { name: 'Teal Noir', stops: ['#071720','#153740','#376966','#7cb6a0','#e3f4c5'] },
-  pink: { name: 'Hot Pink', stops: ['#240d31','#73215e','#bf367d','#ff75af','#ffe0e8'] },
-  mono: { name: 'Mono Chrome', stops: ['#101019','#35333e','#777585','#b4b1bc','#f7f3ee'] }
+const palettes = {
+  vice: ['Vice Sunset', '#16152e', '#ae3b77', '#ff9c69', '#fff1c6'],
+  neon: ['Neon Nights', '#07162d', '#583488', '#eb62bd', '#a8fff3'],
+  golden: ['Golden Hour', '#211821', '#8e493c', '#f7ac62', '#fff1c6'],
+  teal: ['Teal Noir', '#061e29', '#17747d', '#9caaa0', '#ffe1aa'],
+  pink: ['Hot Pink', '#21102c', '#9d216b', '#f880b3', '#ffe6c4'],
+  mono: ['Mono Chrome', '#10131a', '#555764', '#adb4b6', '#fff2de'],
 };
-
-const gradeCache = new WeakMap();
-
-function applyGradientGrade(photo, gradeId, ink = 'base') {
-  if (!gradeCache.has(photo)) gradeCache.set(photo, new Map());
-  const cache = gradeCache.get(photo);
-  const key = gradeId + '/' + ink;
-  if (cache.has(key)) return cache.get(key);
-  const plate = document.createElement('canvas');
-  const scale = Math.min(1, 1800 / Math.max(photo.naturalWidth, photo.naturalHeight));
-  plate.width = Math.max(1, Math.round(photo.naturalWidth * scale));
-  plate.height = Math.max(1, Math.round(photo.naturalHeight * scale));
-  const ctx = plate.getContext('2d', { willReadFrequently: true });
-  ctx.fillStyle = '#514054';
-  ctx.fillRect(0, 0, plate.width, plate.height);
-  ctx.drawImage(photo, 0, 0, plate.width, plate.height);
-
-  const grade = gradientGrades[gradeId];
-  const colors = grade.stops.map(hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)));
-  const lut = Array.from({ length: 256 }, (_, i) => {
-    const position = Math.pow(i / 255, .89) * 4;
-    const stop = Math.min(3, Math.floor(position));
-    return colors[stop].map((value, c) => value + (colors[stop + 1][c] - value) * (position - stop));
+const rgb = hex => hex.match(/[a-f\d]{2}/gi).map(x => parseInt(x,16));
+export const grades = Object.fromEntries(Object.entries(palettes).map(([id,[name,...stops]]) => {
+  const colors = stops.map(rgb);
+  const table = Array.from({length:256}, (_,i) => {
+    const p=i/255*3, a=Math.min(2,Math.floor(p)), t=p-a;
+    return colors[a].map((v,c)=>Math.round(v+(colors[a+1][c]-v)*t));
   });
-  const pixels = ctx.getImageData(0, 0, plate.width, plate.height);
-  const data = pixels.data;
-  const light = new Uint8Array(data.length / 4);
-  for (let p = 0; p < light.length; p++) {
-    const i = p * 4;
-    light[p] = data[i] * .25 + data[i + 1] * .62 + data[i + 2] * .13;
+  return [id,{id,name,stops,table,inks:{hero:.37,cool:.54,base:.43},grain:3.8,vignette:.3}];
+}));
+export function applyGrade(canvas, id, ink='base') {
+  const grade=grades[id] || grades.vice, ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const pixels=ctx.getImageData(0,0,canvas.width,canvas.height), data=pixels.data;
+  const amount=grade.inks[ink];
+  for(let p=0;p<data.length;p+=4){
+    const light=Math.max(0,Math.min(255,Math.round((data[p]*.25+data[p+1]*.6+data[p+2]*.15-128)*1.19+128)));
+    const color=grade.table[light], n=(((p*1664525+1013904223)>>>15)%17-8)*grade.grain/8;
+    for(let c=0;c<3;c++) data[p+c]=Math.max(0,Math.min(255,(data[p+c]-128)*1.1*(1-amount)+128*(1-amount)+color[c]*amount+n));
   }
-  const blend = gradeId === 'mono' ? 1 : ink === 'hero' ? .62 : .87;
-  let seed = 28161;
-  for (let p = 0; p < light.length; p++) {
-    const i = p * 4;
-    const level = light[p];
-    const edge = Math.abs(level - (light[p + 1] ?? level)) + Math.abs(level - (light[p + plate.width] ?? level));
-    const shade = Math.min(37, Math.max(0, edge - 12) * .64);
-    seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
-    const grain = ((seed >>> 24) / 255 - .5) * 14;
-    for (let c = 0; c < 3; c++) {
-      const tint = ink === 'cool' && gradeId !== 'mono' ? [-.15, .18, .23][c] * (255 - level) : 0;
-      data[i + c] = data[i + c] * (1 - blend) + lut[level][c] * blend + tint + grain - shade;
-    }
-  }
-  ctx.putImageData(pixels, 0, 0);
-  cache.set(key, plate);
-  if (cache.size > 8) cache.delete(cache.keys().next().value);
-  return plate;
+  ctx.putImageData(pixels,0,0);
+  const v=ctx.createRadialGradient(canvas.width*.5,canvas.height*.43,canvas.width*.12,canvas.width*.5,canvas.height*.5,Math.max(canvas.width,canvas.height)*.7);
+  v.addColorStop(0,'#09091d00');v.addColorStop(1,`rgba(5,8,25,${grade.vignette})`);ctx.fillStyle=v;ctx.fillRect(0,0,canvas.width,canvas.height);
 }
